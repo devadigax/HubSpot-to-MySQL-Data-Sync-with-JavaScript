@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MySQL Data Viewer</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px auto;
+    }
+
+    table, th, td {
+      border: 1px solid black;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .page-link {
+      padding: 5px 10px;
+      border: 1px solid #ccc;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+
+    .active {
+      background-color: #007bff;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>MySQL Data</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Email</th>
+        <th>HubSpot Object ID</th>
+        <th>Created At</th>
+        <th>Updated At</th>
+      </tr>
+    </thead>
+    <tbody id="data-table"></tbody>
+  </table>
+
+  <div class="pagination" id="pagination">
+    <button id="prev-button">Previous</button>
+    <button id="next-button">Next</button>
+  </div>
+
+  <script>
+    // JavaScript code to fetch and display data in a table with pagination
+    const itemsPerPage = 100;
+    let currentPage = 1;
+
+    async function fetchData(page) {
+      try {
+        const response = await fetch(`/data?page=${page}&limit=${itemsPerPage}`);
+        const data = await response.json();
+
+        const dataTable = document.getElementById('data-table');
+        dataTable.innerHTML = '';
+
+        data.forEach((item) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.id}</td>
+            <td>${item.first_name}</td>
+            <td>${item.last_name}</td>
+            <td>${item.email}</td>
+            <td>${item.hs_object_id}</td>
+            <td>${item.created_at}</td>
+            <td>${item.updated_at}</td>
+          `;
+          dataTable.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    async function updatePagination() {
+      try {
+        const response = await fetch('/data/count');
+        const totalItems = await response.json();
+
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Previous';
+        prevButton.addEventListener('click', () => {
+          if (currentPage > 1) {
+            currentPage--;
+            fetchData(currentPage);
+            updatePagination();
+          }
+        });
+
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.addEventListener('click', () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            fetchData(currentPage);
+            updatePagination();
+          }
+        });
+
+        pagination.appendChild(prevButton);
+
+        for (let i = Math.max(1, currentPage - 5); i <= Math.min(totalPages, currentPage + 5); i++) {
+          const pageLink = document.createElement('span');
+          pageLink.classList.add('page-link');
+          pageLink.textContent = i;
+
+          pageLink.addEventListener('click', () => {
+            currentPage = i;
+            fetchData(currentPage);
+            updatePagination();
+          });
+
+          if (i === currentPage) {
+            pageLink.classList.add('active');
+          }
+
+          pagination.appendChild(pageLink);
+        }
+
+        pagination.appendChild(nextButton);
+      } catch (error) {
+        console.error('Error updating pagination:', error);
+      }
+    }
+
+    fetchData(currentPage);
+    updatePagination();
+  </script>
+</body>
+</html>

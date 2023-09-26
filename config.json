@@ -1,0 +1,9 @@
+{
+    "hubSpotAccessToken": "<placeholder>",
+    "mysql": {
+        "host": "localhost",
+        "user": "root",
+        "password": "",
+        "database": "hubspot"
+    }
+}
